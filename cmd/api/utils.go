@@ -1,8 +1,13 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
+	"fmt"
+	"html/template"
 	"net/http"
+	"os"
+	"time"
 )
 
 func (app *Application) writeJSON(w http.ResponseWriter, statusCode int, payload interface{}, wrap string) error {
@@ -30,4 +35,33 @@ func (app *Application) writeError(w http.ResponseWriter, err error) {
 
 	app.writeJSON(w, http.StatusUnprocessableEntity, httpError, "error")
 
+}
+
+func (app *Application) parseTemplate(data Invoice) (string, error) {
+	var document bytes.Buffer // buffer to hold the final document
+
+	// Load the HTML template
+	templatePath := fmt.Sprintf("%s%s%s", app.config.templateDir, "invoice", app.config.htmlExtension)
+	tmpl, err := template.ParseFiles(templatePath)
+
+	if err != nil {
+		return "", err
+	}
+
+	// Execute the template
+	err = tmpl.Execute(&document, data)
+
+	if err != nil {
+		return "", err
+	}
+
+	// Create populated HTML template
+	populatedTemplate := fmt.Sprintf("%s%d-%d%s", app.config.tempDir, data.Id, int32(time.Now().UnixNano()), app.config.htmlExtension)
+	file, _ := os.Create(populatedTemplate)
+	defer file.Close()
+
+	// Write the populated HTML template to file
+	file.Write(document.Bytes())
+
+	return populatedTemplate, nil
 }

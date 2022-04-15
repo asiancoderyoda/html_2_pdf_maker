@@ -1,10 +1,10 @@
-package models
+package main
 
 type Invoice struct {
 	Id              int64         `json:"id"`
-	Number          string        `json:"number"`
+	InvoiceId       string        `json:"invoice_id"`
 	Date            string        `json:"date"`
-	CustomerId      int64         `json:"customer_id"`
+	CustomerId      string        `json:"customer_id"`
 	CustomerName    string        `json:"customer_name"`
 	CustomerAddress string        `json:"customer_address"`
 	Total           float64       `json:"total"`

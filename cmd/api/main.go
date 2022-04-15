@@ -8,10 +8,19 @@ import (
 )
 
 const version = "1.0.0"
+const HTML = ".html"
+const PDF = ".pdf"
+const TEMPDIR = "../../tmp/"
+const OUTPUTDIR = "../../output/"
+const TEMPLATES = "../../templates/"
 
 type Config struct {
-	port int
-	env  string
+	port          int
+	env           string
+	tempDir       string
+	templateDir   string
+	htmlExtension string
+	pdfExtension  string
 }
 
 type ServerStatus struct {
@@ -21,17 +30,23 @@ type ServerStatus struct {
 }
 
 type Application struct {
-	config Config
+	config      Config
+	wkhtmltopdf wkhtmltopdfInterface
 }
 
 func main() {
 	var cfg Config
 	flag.IntVar(&cfg.port, "port", 8090, "port to listen on")
 	flag.StringVar(&cfg.env, "env", "development", "environment")
+	flag.StringVar(&cfg.tempDir, "tempDir", TEMPDIR, "temporary directory")
+	flag.StringVar(&cfg.templateDir, "templateDir", TEMPLATES, "template directory")
+	flag.StringVar(&cfg.htmlExtension, "htmlExtension", HTML, "html extension")
+	flag.StringVar(&cfg.pdfExtension, "pdfExtension", PDF, "pdf extension")
 	flag.Parse()
 
 	app := Application{
-		config: cfg,
+		config:      cfg,
+		wkhtmltopdf: &PDFGenerator{},
 	}
 
 	srv := &http.Server{

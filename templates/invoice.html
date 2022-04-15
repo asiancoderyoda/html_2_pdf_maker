@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Invoice {{.InvoiceId}} - {{.Date}}</title>
+    <style>
+        h3{
+            text-align: center;
+        }
+        table {
+            font-family: arial, sans-serif;
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        td, th {
+            border: 1px solid #dddddd;
+            text-align: left;
+            padding: 8px;
+        }
+
+        tr:nth-child(even) {
+            background-color: #dddddd;
+        }
+    </style>
+</head>
+<body>
+<h3>{{.CustomerName}}</h3>
+<p>{{.CustomerAddress}}</p>
+<p>{{.Total}}</p>
+<table>
+    <thead>
+    <tr>
+        <th>Item</th>
+        <th>Description</th>
+        <th>Quantity</th>
+        <th>Unit Price</th>
+    </tr>
+    </thead>
+    <tbody>
+    {{range .Items}}
+    <tr>
+        <td>{{.ItemName}}</td>
+        <td>{{.Description}}</td>
+        <td>{{.Quantity}}</td>
+        <td>{{.UnitPrice}}</td>
+    </tr>
+    {{end}}
+    </tbody>
+</table>
+</body>
+</html>
