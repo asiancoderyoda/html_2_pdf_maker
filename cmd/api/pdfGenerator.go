@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/SebastiaanKlippert/go-wkhtmltopdf"
@@ -15,15 +16,6 @@ type wkhtmltopdfInterface interface {
 type PDFGenerator struct{}
 
 func (pdfGen *PDFGenerator) createPdf(pathToFile string) (bool, error) {
-	// Create temporary direcotry if it doesn't exist
-	if _, err := os.Stat(TEMPDIR); os.IsNotExist(err) {
-		errDir := os.Mkdir(TEMPDIR, 0777)
-		if errDir != nil {
-			fmt.Println("Error while creating directory: ", errDir)
-			return false, errDir
-		}
-	}
-
 	// Create new PDF generator
 	pdfg, err := wkhtmltopdf.NewPDFGenerator()
 	if err != nil {
@@ -50,12 +42,26 @@ func (pdfGen *PDFGenerator) createPdf(pathToFile string) (bool, error) {
 		return false, err
 	}
 
-	// dir, err := os.Getwd()
-	// if err != nil {
-	// 	panic(err)
-	// }
-
-	defer os.RemoveAll(TEMPDIR)
+	defer RemoveContents(TEMPDIR)
 
 	return true, nil
+}
+
+func RemoveContents(dir string) error {
+	d, err := os.Open(dir)
+	if err != nil {
+		return err
+	}
+	defer d.Close()
+	names, err := d.Readdirnames(-1)
+	if err != nil {
+		return err
+	}
+	for _, name := range names {
+		err = os.RemoveAll(filepath.Join(dir, name))
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }

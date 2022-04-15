@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"net/http"
+	"os"
 	"time"
 )
 
@@ -50,6 +51,13 @@ func main() {
 		wkhtmltopdf: &PDFGenerator{},
 	}
 
+	err := prepareServer()
+
+	if err != nil {
+		fmt.Println("Error while preparing server: ", err)
+		return
+	}
+
 	srv := &http.Server{
 		Addr:         fmt.Sprintf(":%d", cfg.port),
 		Handler:      app.routes(),
@@ -60,9 +68,32 @@ func main() {
 
 	fmt.Printf("Starting server on port %d in %s mode\n", cfg.port, cfg.env)
 
-	err := srv.ListenAndServe()
+	err = srv.ListenAndServe()
 
 	if err != nil {
 		fmt.Printf("Error starting server: %s\n", err)
+		return
 	}
+}
+
+func prepareServer() error {
+	// Create temporary direcotry if it doesn't exist
+	if _, err := os.Stat(TEMPDIR); os.IsNotExist(err) {
+		errDir := os.Mkdir(TEMPDIR, 0777)
+		if errDir != nil {
+			fmt.Println("Error while creating directory: ", errDir)
+			return errDir
+		}
+	}
+
+	// Create output directory if it doesn't exist
+	if _, err := os.Stat(OUTPUTDIR); os.IsNotExist(err) {
+		errDir := os.Mkdir(OUTPUTDIR, 0777)
+		if errDir != nil {
+			fmt.Println("Error while creating directory: ", errDir)
+			return errDir
+		}
+	}
+
+	return nil
 }
