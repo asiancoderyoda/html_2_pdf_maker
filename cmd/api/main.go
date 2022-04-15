@@ -4,15 +4,16 @@ import (
 	"flag"
 	"fmt"
 	"net/http"
+	"os"
 	"time"
 )
 
 const version = "1.0.0"
 const HTML = ".html"
 const PDF = ".pdf"
-const TEMPDIR = "../../tmp/"
-const OUTPUTDIR = "../../output/"
-const TEMPLATES = "../../templates/"
+const TEMPDIR = "/tmp/"
+const OUTPUTDIR = "/output/"
+const TEMPLATES = "/templates/"
 
 type Config struct {
 	port          int
@@ -36,10 +37,16 @@ type Application struct {
 
 func main() {
 	var cfg Config
+
+	dir, err := os.Getwd()
+	if err != nil {
+		panic(err)
+	}
+
 	flag.IntVar(&cfg.port, "port", 8090, "port to listen on")
 	flag.StringVar(&cfg.env, "env", "development", "environment")
-	flag.StringVar(&cfg.tempDir, "tempDir", TEMPDIR, "temporary directory")
-	flag.StringVar(&cfg.templateDir, "templateDir", TEMPLATES, "template directory")
+	flag.StringVar(&cfg.tempDir, "tempDir", dir+TEMPDIR, "temporary directory")
+	flag.StringVar(&cfg.templateDir, "templateDir", dir+TEMPLATES, "template directory")
 	flag.StringVar(&cfg.htmlExtension, "htmlExtension", HTML, "html extension")
 	flag.StringVar(&cfg.pdfExtension, "pdfExtension", PDF, "pdf extension")
 	flag.Parse()
@@ -59,7 +66,7 @@ func main() {
 
 	fmt.Printf("Starting server on port %d in %s mode\n", cfg.port, cfg.env)
 
-	err := srv.ListenAndServe()
+	err = srv.ListenAndServe()
 
 	if err != nil {
 		fmt.Printf("Error starting server: %s\n", err)
