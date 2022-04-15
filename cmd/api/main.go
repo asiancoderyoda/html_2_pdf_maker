@@ -27,7 +27,7 @@ type Application struct {
 func main() {
 	var cfg Config
 	flag.IntVar(&cfg.port, "port", 8090, "port to listen on")
-	flag.StringVar(&cfg.env, "env", "dev", "environment")
+	flag.StringVar(&cfg.env, "env", "development", "environment")
 	flag.Parse()
 
 	app := Application{
