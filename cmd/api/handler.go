@@ -24,6 +24,15 @@ func (app *Application) serverStatus(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+/*
+TODO:
+Add functionality to upload generated pdf to S3 bucket
+*/
+
+/*
+TODO:
+Add functionality to enqueue a audit event to sqs
+*/
 func (app *Application) createInvoice(w http.ResponseWriter, r *http.Request) {
 	params := httprouter.ParamsFromContext(r.Context())
 	templateType := params.ByName("type")

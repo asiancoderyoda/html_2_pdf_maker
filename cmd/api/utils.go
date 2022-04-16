@@ -83,3 +83,13 @@ func (app *Application) fetchTemplate(templateType string, pdfData []byte) (Temp
 
 	return data, nil
 }
+
+/*
+TODO:
+Add config setup for S3 bucket
+*/
+
+/*
+TODO:
+Add utility to upload file to S3 bucket
+*/
