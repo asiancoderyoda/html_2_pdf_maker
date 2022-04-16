@@ -9,6 +9,6 @@ import (
 func (app *Application) routes() http.Handler {
 	router := httprouter.New()
 	router.HandlerFunc("GET", "/server/status", app.serverStatus)
-	router.HandlerFunc("POST", "/api/v1/invoices", app.createInvoice)
+	router.HandlerFunc("POST", "/api/v1/:type/:save2bucket", app.createInvoice)
 	return app.enableCors(router)
 }

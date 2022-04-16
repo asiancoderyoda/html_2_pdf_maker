@@ -37,11 +37,11 @@ func (app *Application) writeError(w http.ResponseWriter, err error) {
 
 }
 
-func (app *Application) parseTemplate(data Invoice) (string, error) {
+func (app *Application) parseTemplate(templateType string, data TemplateInterface) (string, error) {
 	var document bytes.Buffer // buffer to hold the final document
 
 	// Load the HTML template
-	templatePath := fmt.Sprintf("%s%s%s", app.config.templateDir, "invoice", app.config.htmlExtension)
+	templatePath := fmt.Sprintf("%s%s%s", app.config.templateDir, templateType, app.config.htmlExtension)
 	tmpl, err := template.ParseFiles(templatePath)
 
 	if err != nil {
@@ -56,7 +56,7 @@ func (app *Application) parseTemplate(data Invoice) (string, error) {
 	}
 
 	// Create populated HTML template
-	populatedTemplate := fmt.Sprintf("%s%d-%d%s", app.config.tempDir, data.Id, int32(time.Now().UnixNano()), app.config.htmlExtension)
+	populatedTemplate := fmt.Sprintf("%s%d-%d%s", app.config.tempDir, data.GetID(), int32(time.Now().UnixNano()), app.config.htmlExtension)
 	file, _ := os.Create(populatedTemplate)
 	defer file.Close()
 
@@ -64,4 +64,22 @@ func (app *Application) parseTemplate(data Invoice) (string, error) {
 	file.Write(document.Bytes())
 
 	return populatedTemplate, nil
+}
+
+func (app *Application) fetchTemplate(templateType string, pdfData []byte) (TemplateInterface, error) {
+	var data TemplateInterface
+	switch templateType {
+	case "invoice":
+		data = &Invoice{}
+		err := json.NewDecoder(bytes.NewReader(pdfData)).Decode(data)
+		if err != nil {
+			return nil, err
+		}
+
+	default:
+		err := fmt.Errorf("%s%s", "Unknown template type: ", templateType)
+		return nil, err
+	}
+
+	return data, nil
 }

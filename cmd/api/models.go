@@ -1,5 +1,7 @@
 package main
 
+import "encoding/json"
+
 type Invoice struct {
 	Id              int64         `json:"id"`
 	InvoiceId       string        `json:"invoice_id"`
@@ -17,4 +19,20 @@ type InvoiceItem struct {
 	Description string  `json:"description"`
 	Quantity    int64   `json:"quantity"`
 	UnitPrice   float64 `json:"unit_price"`
+}
+
+func (inv *Invoice) GetID() int64 {
+	return inv.Id
+}
+
+func (item *InvoiceItem) GetID() int64 {
+	return item.Id
+}
+
+type TemplateInterface interface {
+	GetID() int64
+}
+
+type Request struct {
+	Data json.RawMessage
 }

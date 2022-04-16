@@ -10,16 +10,16 @@ import (
 )
 
 type wkhtmltopdfInterface interface {
-	createPdf(string) (bool, error)
+	createPdf(string) (string, error)
 }
 
 type PDFGenerator struct{}
 
-func (pdfGen *PDFGenerator) createPdf(pathToFile string) (bool, error) {
+func (pdfGen *PDFGenerator) createPdf(pathToFile string) (string, error) {
 	// Create new PDF generator
 	pdfg, err := wkhtmltopdf.NewPDFGenerator()
 	if err != nil {
-		return false, err
+		return "", err
 	}
 
 	// Set global options
@@ -32,19 +32,23 @@ func (pdfGen *PDFGenerator) createPdf(pathToFile string) (bool, error) {
 	err = pdfg.Create()
 
 	if err != nil {
-		return false, err
+		return "", err
 	}
 
 	pdfPath := fmt.Sprintf("%s%s-%d%s", OUTPUTDIR, "INV-GEN", int32(time.Now().UnixNano()), PDF)
 	err = pdfg.WriteFile(pdfPath)
 
 	if err != nil {
-		return false, err
+		return "", err
 	}
 
-	defer RemoveContents(TEMPDIR)
+	err = RemoveContents(TEMPDIR)
 
-	return true, nil
+	if err != nil {
+		return "", err
+	}
+
+	return pdfPath, nil
 }
 
 func RemoveContents(dir string) error {
