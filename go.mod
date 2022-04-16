@@ -1,4 +1,4 @@
-module html_2_pdf_maker
+module golang_pdf_generator
 
 go 1.17
 
