@@ -62,7 +62,7 @@ func (app *Application) createInvoice(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if save2bucket == "true" {
-		fileLocation, err := UploadFileToS3(generatedPdfPath, app.awsS3Sess)
+		fileLocation, err := UploadFileToS3(templateType, generatedPdfPath, app.awsS3Sess)
 		if err != nil {
 			app.writeError(w, err)
 			return

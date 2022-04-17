@@ -7,6 +7,7 @@ import (
 	"html/template"
 	"net/http"
 	"os"
+	"path"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -129,7 +130,7 @@ func GetAwsSession() *session.Session {
 TODO:
 Add utility to upload file to S3 bucket
 */
-func UploadFileToS3(filePath string, sess *session.Session) (string, error) {
+func UploadFileToS3(templateType string, filePath string, sess *session.Session) (string, error) {
 	// Open the file for use
 	file, err := os.Open(filePath)
 	if err != nil {
@@ -148,20 +149,21 @@ func UploadFileToS3(filePath string, sess *session.Session) (string, error) {
 	// NewUploader creates a new Uploader instance to upload objects to S3
 	uploader := s3manager.NewUploader(sess)
 	AwsBucket := GetEnvFromKey("AWS_S3_BUCKET")
+	path_to_directory := templateType
 
 	/*
 	 * Config settings: this is where you choose the bucket, filename, content-type etc.
-	 * of the file you're uploading. You also can include -
-	 * ACL:               	  aws.String("private"),
-	 * ContentLength:     	  aws.Int64(size),
+	 * of the file you're uploading.
 	 */
 	uploadOutput, err := uploader.Upload(&s3manager.UploadInput{
 		Bucket:               aws.String(AwsBucket),
-		Key:                  aws.String(fileName),
+		Key:                  aws.String(path.Join(path_to_directory, fileName)), // dir/filename.ext
 		Body:                 bytes.NewReader(buffer),
 		ContentType:          aws.String(http.DetectContentType(buffer)),
 		ContentDisposition:   aws.String("attachment"),
 		ServerSideEncryption: aws.String("AES256"),
+		// ACL:               	  aws.String("private"),
+		// ContentLength:     	  aws.Int64(size),
 	})
 
 	if err != nil {
