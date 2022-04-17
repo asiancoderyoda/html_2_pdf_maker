@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/joho/godotenv"
 )
 
@@ -30,6 +31,7 @@ type ServerStatus struct {
 type Application struct {
 	config      Config
 	wkhtmltopdf wkhtmltopdfInterface
+	awsS3Sess   *session.Session
 }
 
 func main() {
@@ -52,12 +54,15 @@ func main() {
 	flag.StringVar(&cfg.pdfExtension, "pdfExtension", GetEnvFromKey("PDF"), "pdf extension")
 	flag.Parse()
 
+	awsS3Sess := GetAwsSession()
+
 	app := Application{
 		config:      cfg,
 		wkhtmltopdf: &PDFGenerator{},
+		awsS3Sess:   awsS3Sess,
 	}
 
-	err = prepareServer()
+	err = PrepareServer()
 
 	if err != nil {
 		fmt.Println("Error while preparing server: ", err)
@@ -90,7 +95,7 @@ func loadEnv() {
 	}
 }
 
-func prepareServer() error {
+func PrepareServer() error {
 	// Create temporary direcotry if it doesn't exist
 	if _, err := os.Stat(GetEnvFromKey("TEMPDIR")); os.IsNotExist(err) {
 		errDir := os.Mkdir(GetEnvFromKey("TEMPDIR"), 0777)
