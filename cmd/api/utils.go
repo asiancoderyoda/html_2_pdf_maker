@@ -7,8 +7,22 @@ import (
 	"html/template"
 	"net/http"
 	"os"
+	"path"
 	"time"
+
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 )
+
+var AwsRegion string
+var SecretAccessKey string
+var AccessKeyId string
+
+func GetEnvFromKey(key string) string {
+	return os.Getenv(key)
+}
 
 func (app *Application) writeJSON(w http.ResponseWriter, statusCode int, payload interface{}, wrap string) error {
 	wrapper := make(map[string]interface{})
@@ -88,8 +102,77 @@ func (app *Application) fetchTemplate(templateType string, pdfData []byte) (Temp
 TODO:
 Add config setup for S3 bucket
 */
+func GetAwsSession() *session.Session {
+	AccessKeyId = GetEnvFromKey("AWS_ACCESS_KEY_ID")
+	SecretAccessKey = GetEnvFromKey("AWS_SECRET_ACCESS_KEY")
+	AwsRegion = GetEnvFromKey("AWS_REGION")
+
+	sess, err := session.NewSession(&aws.Config{
+		Region: aws.String(AwsRegion),
+		Credentials: credentials.NewStaticCredentials(
+			AccessKeyId,
+			SecretAccessKey,
+			"",
+		),
+	})
+
+	if err != nil {
+		fmt.Println("Error creating aws session: ", err)
+		panic(err)
+	}
+
+	fmt.Println("Successfully created aws session")
+
+	return sess
+}
 
 /*
 TODO:
 Add utility to upload file to S3 bucket
 */
+func UploadFileToS3(templateType string, filePath string, sess *session.Session) (string, error) {
+	// Open the file for use
+	file, err := os.Open(filePath)
+	if err != nil {
+		fmt.Println("Error opening file: ", err)
+		return "", err
+	}
+	defer file.Close()
+
+	// Get file size and read the file content into a buffer
+	fileInfo, _ := file.Stat()
+	var size int64 = fileInfo.Size()
+	var fileName string = fileInfo.Name()
+	buffer := make([]byte, size)
+	file.Read(buffer)
+
+	// NewUploader creates a new Uploader instance to upload objects to S3
+	uploader := s3manager.NewUploader(sess)
+	AwsBucket := GetEnvFromKey("AWS_S3_BUCKET")
+	path_to_directory := templateType
+
+	/*
+	 * Config settings: this is where you choose the bucket, filename, content-type etc.
+	 * of the file you're uploading.
+	 */
+	uploadOutput, err := uploader.Upload(&s3manager.UploadInput{
+		Bucket:               aws.String(AwsBucket),
+		Key:                  aws.String(path.Join(path_to_directory, fileName)), // dir/filename.ext
+		Body:                 bytes.NewReader(buffer),
+		ContentType:          aws.String(http.DetectContentType(buffer)),
+		ContentDisposition:   aws.String("attachment"),
+		ServerSideEncryption: aws.String("AES256"),
+		// ACL:               	  aws.String("private"),
+		// ContentLength:     	  aws.Int64(size),
+	})
+
+	if err != nil {
+		fmt.Println("Error uploading file to S3: ", err)
+		return "", err
+	}
+
+	fmt.Printf("Successfully uploaded file to S3: %s\n", uploadOutput.Location)
+	fmt.Println(uploadOutput.ETag, uploadOutput.VersionID, uploadOutput.UploadID)
+
+	return uploadOutput.Location, nil
+}

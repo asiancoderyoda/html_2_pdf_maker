@@ -35,14 +35,14 @@ func (pdfGen *PDFGenerator) createPdf(pathToFile string) (string, error) {
 		return "", err
 	}
 
-	pdfPath := fmt.Sprintf("%s%s-%d%s", OUTPUTDIR, "INV-GEN", int32(time.Now().UnixNano()), PDF)
+	pdfPath := fmt.Sprintf("%s%s-%d%s", GetEnvFromKey("OUTPUTDIR"), "INV-GEN", int32(time.Now().UnixNano()), GetEnvFromKey("PDF"))
 	err = pdfg.WriteFile(pdfPath)
 
 	if err != nil {
 		return "", err
 	}
 
-	err = RemoveContents(TEMPDIR)
+	err = RemoveContents(GetEnvFromKey("TEMPDIR"))
 
 	if err != nil {
 		return "", err

@@ -12,7 +12,7 @@ import (
 
 func (app *Application) serverStatus(w http.ResponseWriter, r *http.Request) {
 	status := ServerStatus{
-		Version: version,
+		Version: GetEnvFromKey("VERSION"),
 		Status:  "OK",
 		Env:     app.config.env,
 	}
@@ -23,11 +23,6 @@ func (app *Application) serverStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 }
-
-/*
-TODO:
-Add functionality to upload generated pdf to S3 bucket
-*/
 
 /*
 TODO:
@@ -66,16 +61,27 @@ func (app *Application) createInvoice(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fileBytes, err := ioutil.ReadFile(generatedPdfPath)
+	if save2bucket == "true" {
+		fileLocation, err := UploadFileToS3(templateType, generatedPdfPath, app.awsS3Sess)
+		if err != nil {
+			app.writeError(w, err)
+			return
+		}
 
-	if err != nil {
-		app.writeError(w, err)
-		return
+		fmt.Println("File uploaded to: ", fileLocation)
+		app.writeJSON(w, http.StatusOK, fileLocation, "file_location")
+	} else {
+		fileBytes, err := ioutil.ReadFile(generatedPdfPath)
+
+		if err != nil {
+			app.writeError(w, err)
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
+		w.Header().Set("Content-Type", "application/pdf")
+		w.Header().Set("Content-Disposition", "attachment; filename=invoice.pdf")
+		w.Header().Set("Content-Length", fmt.Sprintf("%d", len(fileBytes)))
+		w.Write(fileBytes)
 	}
-
-	w.WriteHeader(http.StatusOK)
-	w.Header().Set("Content-Type", "application/pdf")
-	w.Header().Set("Content-Disposition", "attachment; filename=invoice.pdf")
-	w.Header().Set("Content-Length", fmt.Sprintf("%d", len(fileBytes)))
-	w.Write(fileBytes)
 }
