@@ -12,7 +12,7 @@ import (
 
 func (app *Application) serverStatus(w http.ResponseWriter, r *http.Request) {
 	status := ServerStatus{
-		Version: version,
+		Version: GetEnvFromKey("VERSION"),
 		Status:  "OK",
 		Env:     app.config.env,
 	}

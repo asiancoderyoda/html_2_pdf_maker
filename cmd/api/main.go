@@ -3,17 +3,14 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
-)
 
-const version = "1.0.0"
-const HTML = ".html"
-const PDF = ".pdf"
-const TEMPDIR = "temp/"
-const OUTPUTDIR = "output/"
-const TEMPLATES = "templates/"
+	"github.com/joho/godotenv"
+)
 
 type Config struct {
 	port          int
@@ -36,14 +33,23 @@ type Application struct {
 }
 
 func main() {
+	loadEnv()
+
 	var cfg Config
 
-	flag.IntVar(&cfg.port, "port", 8090, "port to listen on")
-	flag.StringVar(&cfg.env, "env", "development", "environment")
-	flag.StringVar(&cfg.tempDir, "tempDir", TEMPDIR, "temporary directory")
-	flag.StringVar(&cfg.templateDir, "templateDir", TEMPLATES, "template directory")
-	flag.StringVar(&cfg.htmlExtension, "htmlExtension", HTML, "html extension")
-	flag.StringVar(&cfg.pdfExtension, "pdfExtension", PDF, "pdf extension")
+	port, err := strconv.Atoi(GetEnvFromKey("PORT"))
+
+	if err != nil {
+		fmt.Println("Error while converting PORT to int: ", err)
+		os.Exit(1)
+	}
+
+	flag.IntVar(&cfg.port, "port", port, "port to listen on")
+	flag.StringVar(&cfg.env, "env", GetEnvFromKey("ENV"), "environment")
+	flag.StringVar(&cfg.tempDir, "tempDir", GetEnvFromKey("TEMPDIR"), "temporary directory")
+	flag.StringVar(&cfg.templateDir, "templateDir", GetEnvFromKey("TEMPLATES"), "template directory")
+	flag.StringVar(&cfg.htmlExtension, "htmlExtension", GetEnvFromKey("HTML"), "html extension")
+	flag.StringVar(&cfg.pdfExtension, "pdfExtension", GetEnvFromKey("PDF"), "pdf extension")
 	flag.Parse()
 
 	app := Application{
@@ -51,7 +57,7 @@ func main() {
 		wkhtmltopdf: &PDFGenerator{},
 	}
 
-	err := prepareServer()
+	err = prepareServer()
 
 	if err != nil {
 		fmt.Println("Error while preparing server: ", err)
@@ -76,10 +82,18 @@ func main() {
 	}
 }
 
+func loadEnv() {
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatalf("Error loading .env file")
+		os.Exit(1)
+	}
+}
+
 func prepareServer() error {
 	// Create temporary direcotry if it doesn't exist
-	if _, err := os.Stat(TEMPDIR); os.IsNotExist(err) {
-		errDir := os.Mkdir(TEMPDIR, 0777)
+	if _, err := os.Stat(GetEnvFromKey("TEMPDIR")); os.IsNotExist(err) {
+		errDir := os.Mkdir(GetEnvFromKey("TEMPDIR"), 0777)
 		if errDir != nil {
 			fmt.Println("Error while creating directory: ", errDir)
 			return errDir
@@ -87,8 +101,8 @@ func prepareServer() error {
 	}
 
 	// Create output directory if it doesn't exist
-	if _, err := os.Stat(OUTPUTDIR); os.IsNotExist(err) {
-		errDir := os.Mkdir(OUTPUTDIR, 0777)
+	if _, err := os.Stat(GetEnvFromKey("OUTPUTDIR")); os.IsNotExist(err) {
+		errDir := os.Mkdir(GetEnvFromKey("OUTPUTDIR"), 0777)
 		if errDir != nil {
 			fmt.Println("Error while creating directory: ", errDir)
 			return errDir

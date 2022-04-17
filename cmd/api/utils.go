@@ -10,6 +10,10 @@ import (
 	"time"
 )
 
+func GetEnvFromKey(key string) string {
+	return os.Getenv(key)
+}
+
 func (app *Application) writeJSON(w http.ResponseWriter, statusCode int, payload interface{}, wrap string) error {
 	wrapper := make(map[string]interface{})
 	wrapper[wrap] = payload
