@@ -13,6 +13,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 )
 
@@ -99,9 +100,8 @@ func (app *Application) fetchTemplate(templateType string, pdfData []byte) (Temp
 }
 
 /*
-TODO:
-Add config setup for S3 bucket
-*/
+ *Config setup for S3 bucket
+ */
 func GetAwsSession() *session.Session {
 	AccessKeyId = GetEnvFromKey("AWS_ACCESS_KEY_ID")
 	SecretAccessKey = GetEnvFromKey("AWS_SECRET_ACCESS_KEY")
@@ -127,9 +127,8 @@ func GetAwsSession() *session.Session {
 }
 
 /*
-TODO:
-Add utility to upload file to S3 bucket
-*/
+ * Utility to upload file to S3 bucket
+ */
 func UploadFileToS3(templateType string, filePath string, sess *session.Session) (string, error) {
 	// Open the file for use
 	file, err := os.Open(filePath)
@@ -175,4 +174,35 @@ func UploadFileToS3(templateType string, filePath string, sess *session.Session)
 	fmt.Println(uploadOutput.ETag, uploadOutput.VersionID, uploadOutput.UploadID)
 
 	return uploadOutput.Location, nil
+}
+
+/*
+ * Utility to download file to S3 bucket
+ */
+func DownloadFileFromS3(docType string, key string, sess *session.Session) error {
+	AwsBucket := GetEnvFromKey("AWS_S3_BUCKET")
+	downloader := s3manager.NewDownloader(sess)
+	path_to_directory := docType
+
+	// Create a file to write the S3 Object contents to.
+	file, err := os.Create(path.Join(GetEnvFromKey("TEMPDIR"), key))
+	if err != nil {
+		fmt.Println("Error creating file: ", err)
+		return err
+	}
+	defer file.Close()
+
+	// Write the contents of S3 Object to the file
+	n, err := downloader.Download(file,
+		&s3.GetObjectInput{
+			Bucket: aws.String(AwsBucket),
+			Key:    aws.String(path.Join(path_to_directory, key+".pdf")),
+		})
+	if err != nil {
+		fmt.Println("Error downloading file: ", err)
+		return err
+	}
+	fmt.Println("Successfully downloaded file: ", n)
+
+	return nil
 }
